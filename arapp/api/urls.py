@@ -1,7 +1,7 @@
 from django.urls import path
 
 from arapp.api.views import  UserLoginView, UserRegistrationView,  AdminLoginView, EmailVerify, ResetPassword,\
-    UserList, PostList
+    UserList, UploadView
 
 urlpatterns = [
     path('signup', UserRegistrationView.as_view()),
@@ -11,5 +11,5 @@ urlpatterns = [
     path('admin/login', AdminLoginView.as_view()),
     path('users', UserList.as_view()),
     path('users/<uuid:id>', UserList.as_view(), name="get_userDetail"),
-    path('posts',PostList.as_view()),
+    path('upload', UploadView.as_view()),
 ]

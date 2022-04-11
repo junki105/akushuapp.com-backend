@@ -1,5 +1,4 @@
-from django.contrib.auth import authenticate
-from django.shortcuts import render
+
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework import status
@@ -7,18 +6,16 @@ from rest_framework.generics import CreateAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from django.db.models import Q
-from rest_framework.parsers import MultiPartParser, FormParser
 from django.core.files.storage import FileSystemStorage
 from django.shortcuts import get_object_or_404, render
-from datetime import datetime,  timedelta
-from django.db.models import Sum
-from django.utils import timezone
 from django.core import serializers
-from django.http import HttpResponse
 from django.utils.crypto import get_random_string
 from django.core.mail import send_mail
 from arapp.api.serializers import UserLoginSerializer, UserRegistrationSerializer, AdminLoginSerializer
 from arapp.api.models import User
+from vws import VWS, CloudRecoService
+import io
+import os
 
 class UserRegistrationView(CreateAPIView):
     serializer_class = UserRegistrationSerializer
@@ -179,3 +176,36 @@ class UserList(APIView):
         }
         return Response(response, status=status_code)
 
+class UploadView(APIView):
+    permission_classes = (AllowAny,)
+    def post(self, request):
+        server_access_key = '6dde616a95e323b10c829905003f885a46d37653'
+        server_secret_key = '7dd11e0fc9798048c5b209cb4fa737c588c14c1d'
+        client_access_key = '42e5868a049f7664c88968df024799551c292265'
+        client_secret_key = 'b1c056eb779ef77e3661540fd3e7029dfdb76c04'
+        fs = FileSystemStorage()
+        imageFile =  request.FILES.get('image', '')
+        videoFile =  request.FILES.get('video', '')
+        videoFilename = fs.save(videoFile.name, videoFile)
+        imageFilename = fs.save(imageFile.name, imageFile)
+        with open(os.path.join(settings.MEDIA_ROOT, imageFilename), 'rb') as my_image_file:
+            my_image = io.BytesIO(my_image_file.read())
+        status_code = status.HTTP_201_CREATED
+        vws_client = VWS(
+            server_access_key=server_access_key,
+            server_secret_key=server_secret_key,
+        )
+        target_id = vws_client.add_target(
+            name=videoFilename,
+            width=1,
+            image=my_image,
+            active_flag=True,
+            application_metadata=videoFilename,
+        )
+        response = {
+            'success': 'True',
+            'status code': status_code,
+            'type': 'Video uploaded successfully',
+            'imageID':target_id
+        }
+        return Response(response, status=status_code)
