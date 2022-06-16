@@ -1,4 +1,4 @@
-# MusicianBackend Backend Deploy Guide
+# akushuapp.com Backend Deploy Guide
 
 ## Development setup
 
